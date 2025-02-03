@@ -195,5 +195,5 @@ $Management.GetConfiguration(@{
     DeviceGroup = "VDI"
     DeviceName  = "win16-vdi01"
     Level       = "vm"
-    Reload = $true
+    Reload      = $true # optional property
 }).resources
