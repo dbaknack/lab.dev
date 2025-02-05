@@ -174,10 +174,9 @@ class Management{
         "$($fromSender.Level)"
     }
 }
-
-# initalize class
 $Management = [Management]::new(@{Source = ".\management.setup\lab.configuration.json"})
 
+<#
 # test methods
 $Management.GetData()
 $Management.ReloadData()
@@ -187,6 +186,7 @@ $Management.GetDeviceType()
 $Management.GetDeviceGroup()
 $Management.GetDevice()
 $Management.GetConfigurationType()
+#>
 
 $Management.GetConfiguration(@{
     DomainName  = "lab.com"
@@ -195,5 +195,5 @@ $Management.GetConfiguration(@{
     DeviceGroup = "VDI"
     DeviceName  = "win16-vdi01"
     Level       = "vm"
-    Reload      = $true # optional property
+    Reload      = $false # optional property
 }).resources
