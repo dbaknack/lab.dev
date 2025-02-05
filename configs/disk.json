@@ -1,0 +1,20 @@
+{
+    "win16-vdi01":{
+        "Disk 0":{
+            "Properties":{
+                "Description":"",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity":"50000"
+            }
+        },
+        "Disk 1":{
+            "Properties":{
+                "Description":"",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity":"5000"
+            }
+        }
+    }
+}
