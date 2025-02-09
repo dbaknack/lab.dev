@@ -2,18 +2,194 @@
     "win16-vdi01":{
         "Disk 0":{
             "Properties":{
-                "Description":"",
+                "Number":0,
+                "Description":"Disk for windows os",
+                "Label":"",
+                "IsMountPoint":false,
+                "DriveLetter":"C",
+                "DriveFilePath":"",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"Default",
+                "OperationalStatus":"Online",
                 "Status":"Online",
                 "Partition":"GPT",
-                "Capacity":"50000"
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
             }
         },
         "Disk 1":{
             "Properties":{
-                "Description":"",
+                "Number":1,
+                "Description":"Ttest disk",
+                "Label":"TEST",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"C:\\TEST",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
                 "Status":"Online",
                 "Partition":"GPT",
-                "Capacity":"5000"
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        }
+    },
+    "sql01":{
+        "Disk 0":{
+            "Properties":{
+                "Number":0,
+                "Description":"Disk for windows os",
+                "Label":"",
+                "IsMountPoint":false,
+                "DriveLetter":"C",
+                "DriveFilePath":"",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"Default",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 1":{
+            "Properties":{
+                "Number":1,
+                "Description":"SQL Server root drive.",
+                "Label":"Instance01",
+                "IsMountPoint":true,
+                "DriveLetter":"A",
+                "DriveFilePath":"",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 2":{
+            "Properties":{
+                "Number":2,
+                "Description":"Backup drive for Instance01",
+                "Label":"BACKUP",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"I:\\BACKUP",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 3":{
+            "Properties":{
+                "Number":3,
+                "Description":"Data01 drive for Instance01",
+                "Label":"BACKUP",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"I:\\Data01",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 4":{
+            "Properties":{
+                "Number":4,
+                "Description":"Index01 drive for Instance01",
+                "Label":"INDEX01",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"I:\\INDEX01",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 5":{
+            "Properties":{
+                "Number":5,
+                "Description":"Tempdb drive for Instance01",
+                "Label":"TEMPDB",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"I:\\TEMPDB",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 6":{
+            "Properties":{
+                "Number":6,
+                "Description":"Log drive for Instance01",
+                "Label":"LOG",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"I:\\LOG",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
+            }
+        },
+        "Disk 7":{
+            "Properties":{
+                "Number":6,
+                "Description":"Audit drive for Instance01",
+                "Label":"AUDIT",
+                "IsMountPoint":false,
+                "DriveLetter":"",
+                "DriveFilePath":"I:\\AUDIT",
+                "FileSystem":"NTFS",
+                "AllocationUnitSize":"64K",
+                "OperationalStatus":"Online",
+                "Status":"Online",
+                "Partition":"GPT",
+                "Capacity": {
+                    "Max":true,
+                    "Size":""
+                }
             }
         }
     }
