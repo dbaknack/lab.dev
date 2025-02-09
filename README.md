@@ -26,3 +26,4 @@ Get-ConfigDiskProperties @{
     Disk = "Disk 1"
 }
 ```
+# Add disk
