@@ -187,7 +187,8 @@ $Management.GetDeviceGroup()
 $Management.GetDevice()
 $Management.GetConfigurationType()
 #>
-
+Invoke-Command -ComputerName sql01 -ScriptBlock {hostname} -Credential (Get-Credential)
+ipconfig /flushdns
 $Management.GetConfiguration(@{
     DomainName  = "lab.com"
     Enviornment = "dev"

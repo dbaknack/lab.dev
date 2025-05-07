@@ -1,75 +1,112 @@
-
-function Get-UDFProjectFolder{
-    $ParentFolder = Split-Path -Path $PSScriptRoot -Parent
-    [pscustomobject]@{Name = $ParentFolder}
-}
-function ConvertTo-UDFHashtable{
-    param($object)
-
-    $hashTable = [ordered]@{}
-    if(($object.gettype()).name -eq 'pscustomobject'){
-        foreach($property in $object.psobject.properties){
-            $hashTable[$property.name] = ConvertTo-UDFHashtable -object $property.value
-        }
-    }else{
-        return $object
-    }
-   return  $hashtable
-}
-function Get-UDFConfig{
+# function used to get disk(s) given a server name
+function Get-PSConfigDisk{
     param([hashtable]$fromSender)
 
+    # if there is an issue with this function, stop.
     $ErrorActionPreference = "Stop"
-    if($null -eq $fromSender){
-        $fromSender = @{}
-    }
 
-    if(-not($fromSender.ContainsKey('Source'))){
-        $msgError = "Mandatory parameter 'Source' missing."
+    $item = Get-PSConfig @{Source = "disk"}
+
+    if(-not($fromSender.ContainsKey('Server'))){
+        $msgError = "Mandatory parameter 'Server' missing."
         (Write-Error -Message $msgError)
     }
-    $source = $fromSender.Source
-    if(-not(Test-Path -path $source)){
-        $msgError = "Source path '{0}' does not exist." -f $source
-        Write-Error -Message $msgError | Out-Null; return $Error[0]
+
+    $servers = @($item.Keys)
+    $server = $fromSender.Server
+    if(-not($servers -contains $server)){
+        $msgError = "The server provided '{0}' does not have any disk(s.)" -f $server
+        (Write-Error -Message $msgError)
     }
-    $item = Get-Item -Path $source
-    $content = Get-Content -Path $source 
-    switch($item.Extension){
-        '.json'{
-            ConvertTo-UDFHashtable ($content | ConvertFrom-Json)
-        }
-        '.csv'{
-            $content | ConvertFrom-Csv
-        }
-        default{
-            $msgError = "Configuration file(s) with extension '{0}', are not supported." -f $_
-            Write-Error -Message $msgError | Out-Null; return $Error[0]
-        }
+    
+    if($servers -contains $server){
+        $item.$server
     }
 }
-#  disk related function(s)
-function Get-ConfigHostDisk{
+# function used to get the properties of a disk given a server name and disk number (e.i 'Disk N')
+function Get-PSConfigDiskProperties{
     param([hashtable]$fromSender)
 
-    $ErrorActionPreference = "Stop"
-    if($null -eq $fromSender){
-        $fromSender = @{}
-    }
-    if(-not($fromSender.ContainsKey('HostName'))){
-        $msgError = "Mandatory parameter 'HostName' missing."
+    $server = $fromSender.Server
+    $item = Get-PSConfigDisk @{Server = $server}
+    $disks = @($item.Keys)
+    $disk = $fromSender.Disk
+
+    if(-not($disks -contains $disk)){
+        $msgError = "The disk provided '{0}' does not exists." -f $disk
         (Write-Error -Message $msgError)
     }
-    $hostName = $fromSender.HostName
-
-    if(-not($script:configDisk.keys -contains $hostName)){
-        $msgError = ("Hostname '{0}' is not listed in the disk.json file.") -f $hostName
-        (Write-Error -Message $msgError)
+    if($disks -contains $disk){
+        $item.$disk.properties
     }
-
-    return $script:configDisk[$hostName]
 }
-function Get-UDFAllocationUnit{
+function Set-PSConfigOSDisk{
+    param([hashtable]$fromSender)
+    $ErrorActionPreference = "Stop"
+    $diskProperties = Get-PSConfigDiskProperties $fromSender
+
+    $server = $diskProperties.Server
+    $number = $diskProperties.Number
+    $osDisk = (Get-Disk | Where-Object {$_.Number -eq $number})
+
+    # if ther disk does not exists function fails
+    if($null -eq $osDisk){
+        $msgError = ("Server '{0}' does not have a disk number '{1}' ") -f $server,$number 
+        (Write-Error -Message $msgError)
+    }
+
+    # online disk when offline'd, and needs to be online'd
+    $status = $diskProperties.Status
+    $partition = $diskProperties.Partition
+    if(($osDisk.OperationalStatus -eq "Offline") -and ($status -eq "Online")){
+        Initialize-Disk -Number $number -PartitionStyle $partition | Out-Null
+  
+        # the status of the disk is re-assesed
+        $osDisk = (Get-Disk | Where-Object {$_.Number -eq $number})
+    }
+
+    
+    $unitSize = PSConfigDiskAllocationUnit @{Size = $diskProperties.AllocationUnitSize}
+    $fileSystem = $diskProperties.FileSystem
+    $label = $diskProperties.label
+    
+    # drive letters are only assigned when then drivefilepath is empty and
+    # the driveletter property is not
+    if(($diskProperties.DriveLetter -ne '') -and ($diskProperties.DriveFilePath -eq '')){
+        $driveLetter = $diskProperties.DriveLetter
+        # max is always set when true, and size only used whenmax is false
+        if($diskProperties.Capacity.Max -eq $true){
+            New-Partition -DiskNumber $number -UseMaximumSize -DriveLetter $driveLetter | Out-Null
+        }else{
+            $size = $diskProperties.Capacity.Size
+            New-Partition -DiskNumber $number -Size $size -DriveLetter $driveLetter | Out-Null
+        }
+        Format-Volume -DriveLetter $driveLetter -FileSystem $fileSystem -AllocationUnitSize $unitSize -NewFileSystemLabel $label -Confirm:$false -Force | Out-Null
+    }
+    if(($diskProperties.DriveLetter -eq '') -and ($diskProperties.DriveFilePath -ne '')){
+        $driveFilePath = "C:\test"
+        $tempDriveLetter = 'E'
+        if(-not(Test-Path -Path $driveFilePath)){
+            New-Item -Path $driveFilePath -ItemType Directory | Out-Null
+        }
+        
+        # max is always set when true, and size only used whenmax is false
+        if($diskProperties.Capacity.Max -eq $true){
+            New-Partition -DiskNumber $number -UseMaximumSize  -DriveLetter $tempDriveLetter | Out-Null
+        }else{
+            $size = $diskProperties.Capacity.Size
+            New-Partition -DiskNumber $number -Size $size -DriveLetter $tempDriveLetter| Out-Null
+        }
+        $partitionNumber = ((Get-Disk -Number $number | Get-Partition) | Select-Object * | Where-Object {$_.Type -eq 'basic'}).partitionNumber
+        $tempPartition = Get-Partition -DiskNumber $number -PartitionNumber $partitionNumber
+        Format-Volume -DriveLetter $tempDriveLetter -FileSystem $fileSystem -AllocationUnitSize $unitSize -NewFileSystemLabel $label -Confirm:$false -Force | Out-Null
+        $tempPartition | Remove-PartitionAccessPath -AccessPath "$($tempDriveLetter):" | Out-Null
+        Add-PartitionAccessPath -DiskNumber $number -PartitionNumber $partitionNumber -AccessPath $driveFilePath | Out-Null
+    }
+}
+
+# helper function to convert a allocation unit size to the correct format when setting up a disk
+function PSConfigDiskAllocationUnit{
     param([hashtable]$fromSender)
 
     $ErrorActionPreference = "Stop"
@@ -112,99 +149,7 @@ function Get-UDFAllocationUnit{
     }
     return $computed
 }
-# given a server name, return disks
-function Get-ConfigDisk{
-    param([hashtable]$fromSender)
-    $item = (Get-UDFConfig @{Source = $script:source})
-
-    if(-not($fromSender.ContainsKey('Server'))){
-        $msgError = "Mandatory parameter 'Server' missing."
-        (Write-Error -Message $msgError)
-    }
-
-    $Servers = @($item.Keys)
-    $server = $fromSender.Server
-    if($Servers -contains $server){
-        $item.$server
-    }
-}
-# given a server name and a disk, return config
-function Get-ConfigDiskProperties{
-    param([hashtable]$fromSender)
-
-    $server = $fromSender.Server
-    $item = Get-ConfigDisk @{Server = $server}
-    $disks = @($item.Keys)
-    $disk = $fromSender.Disk
-    if($disks -contains $disk){
-        $item.$disk.properties
-    }
-}
-Function Set-OSDisk{
-    param([hashtable]$fromSender)
-    $ErrorActionPreference = "Stop"
-    $diskProperties = Get-ConfigDiskProperties $fromSender
-
-    $server = $diskProperties.Server
-    $number = $diskProperties.Number
-    $osDisk = (Get-Disk | Where-Object {$_.Number -eq $number})
-
-    # if ther disk does not exists function fails
-    if($null -eq $osDisk){
-        $msgError = ("Server '{0}' does not have a disk number '{1}' ") -f $server,$number 
-        (Write-Error -Message $msgError)
-    }
-
-    # online disk when offline'd, and needs to be online'd
-    $status = $diskProperties.Status
-    $partition = $diskProperties.Partition
-    if(($osDisk.OperationalStatus -eq "Offline") -and ($status -eq "Online")){
-        Initialize-Disk -Number $number -PartitionStyle $partition | Out-Null
-  
-        # the status of the disk is re-assesed
-        $osDisk = (Get-Disk | Where-Object {$_.Number -eq $number})
-    }
-
-    
-    $unitSize = Get-UDFAllocationUnit @{Size = $diskProperties.AllocationUnitSize}
-    $fileSystem = $diskProperties.FileSystem
-    $label = $diskProperties.label
-    
-    # drive letters are only assigned when then drivefilepath is empty and
-    # the driveletter property is not
-    if(($diskProperties.DriveLetter -ne '') -and ($diskProperties.DriveFilePath -eq '')){
-        $driveLetter = $diskProperties.DriveLetter
-        # max is always set when true, and size only used whenmax is false
-        if($diskProperties.Capacity.Max -eq $true){
-            New-Partition -DiskNumber $number -UseMaximumSize -DriveLetter $driveLetter | Out-Null
-        }else{
-            $size = $diskProperties.Capacity.Size
-            New-Partition -DiskNumber $number -Size $size -DriveLetter $driveLetter | Out-Null
-        }
-        Format-Volume -DriveLetter $driveLetter -FileSystem $fileSystem -AllocationUnitSize $unitSize -NewFileSystemLabel $label -Confirm:$false -Force | Out-Null
-    }
-    if(($diskProperties.DriveLetter -eq '') -and ($diskProperties.DriveFilePath -ne '')){
-        $driveFilePath = "C:\test"
-        $tempDriveLetter = 'E'
-        if(-not(Test-Path -Path $driveFilePath)){
-            New-Item -Path $driveFilePath -ItemType Directory | Out-Null
-        }
-        
-        # max is always set when true, and size only used whenmax is false
-        if($diskProperties.Capacity.Max -eq $true){
-            New-Partition -DiskNumber $number -UseMaximumSize  -DriveLetter $tempDriveLetter | Out-Null
-        }else{
-            $size = $diskProperties.Capacity.Size
-            New-Partition -DiskNumber $number -Size $size -DriveLetter $tempDriveLetter| Out-Null
-        }
-        $partitionNumber = ((Get-Disk -Number $number | Get-Partition) | Select-Object * | Where-Object {$_.Type -eq 'basic'}).partitionNumber
-        $tempPartition = Get-Partition -DiskNumber $number -PartitionNumber $partitionNumber
-        Format-Volume -DriveLetter $tempDriveLetter -FileSystem $fileSystem -AllocationUnitSize $unitSize -NewFileSystemLabel $label -Confirm:$false -Force | Out-Null
-        $tempPartition | Remove-PartitionAccessPath -AccessPath "$($tempDriveLetter):" | Out-Null
-        Add-PartitionAccessPath -DiskNumber $number -PartitionNumber $partitionNumber -AccessPath $driveFilePath | Out-Null
-    }
-}
-function ConfigureDisk{
+function PSConfigureDisk{
     param([hashtable]$fromSender)
 
     $ErrorActionPreference = "Stop"
@@ -227,7 +172,7 @@ function ConfigureDisk{
     # method is being used and get the disk accordingly.
     $disks = Get-ConfigDisk @{Server = $server}
     $myDisks = @{}
-     switch($disk){
+    switch($disk){
         {$disk -eq '*'}{
             $disks.GetEnumerator() | ForEach-Object{
                 $myDisks.Add($_.Key,$_.value)

@@ -18,3 +18,7 @@ ConfigureDisk @{
     Server = "win16-vdi01"
     Disk = @("Disk 1","Disk 2")
 }
+
+Get-ConfigDisk @{
+    Server = "sql01"
+}

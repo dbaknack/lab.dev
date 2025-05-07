@@ -65,7 +65,7 @@
                 "Description":"SQL Server root drive.",
                 "Label":"Instance01",
                 "IsMountPoint":true,
-                "DriveLetter":"A",
+                "DriveLetter":"I",
                 "DriveFilePath":"",
                 "FileSystem":"NTFS",
                 "AllocationUnitSize":"64K",
@@ -101,7 +101,7 @@
             "Properties":{
                 "Number":3,
                 "Description":"Data01 drive for Instance01",
-                "Label":"BACKUP",
+                "Label":"DATA01",
                 "IsMountPoint":false,
                 "DriveLetter":"",
                 "DriveFilePath":"I:\\Data01",
@@ -194,3 +194,4 @@
         }
     }
 }
+
